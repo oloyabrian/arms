@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ title }}
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-5">
+    <div class="alert alert-warning p-4 rounded shadow-sm">
+      <h3 class="mb-3 text-danger">Delete Confirmation</h3>
+      <p>Are you sure you want to delete the record: <strong>"{{ obj }}"</strong>?</p>
+      <form method="post" class="d-inline">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+      </form>
+           <a href="{{ request.META.HTTP_REFERER }}">Go Back</a>
+      <a href="{% url 'animal_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+  </div>
+{% endblock %}
+

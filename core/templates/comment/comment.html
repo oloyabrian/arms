@@ -1,0 +1,51 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ title }}
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h3 class="mb-2">{{ title }}</h3>
+      <div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'add_comment' %}" class="btn btn-success btn-sm text-white">
+        <i class="bi bi-plus-circle"></i> Add New Comment
+    </a>
+</div>
+
+<table class="table table-striped table-custom">
+    <thead>
+        <tr>
+            <th>Student</th>
+            <th>Term</th>
+            <th>Comment</th>
+            <th>Date Commented</th>
+            <th>Edit</th>
+            <th>Delete</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for comment in comments %}
+        <tr>
+            <td>{{ comment.student }}</td>
+            <td>{{ comment.term }}</td>
+            <td>{{ comment.comment }}</td>
+            <td>{{ comment.date_commented }}</td>
+            <td>
+                <a href="{% url 'update_comment' comment.id %}"  class="btn btn-outline-success btn-sm">Edit </a>
+                </td>
+                <td>
+                <form method="post" action="{% url 'delete_comment' comment.id %}" onsubmit="return confirm('Are you sure you want to delete this record?');">
+                            {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+
+                </form>
+                </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+

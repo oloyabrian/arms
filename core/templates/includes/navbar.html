@@ -1,0 +1,41 @@
+{% load static %}
+<nav class="navbar navbar-expand-sm navbar-dark sticky-top" style="background-color: #800000;">
+  <div class="container-fluid">
+
+  <!-- Logo and School Name -->
+<div class="d-flex flex-column align-items-center me-4">
+   <a class="navbar-brand mb-0" href="/">
+        <img src="{% static 'images/logo.jpeg' %}" alt="School Logo"
+             class="img-fluid rounded-circle mb-1" style="height: 50px; width: 80px;">
+      </a>
+  <span class="text-white fw-bold small text-center">Mapeera Nursery and Primary School</span>
+</div>
+
+
+    <!-- Toggle for mobile -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Nav Links and Search -->
+    <div class="collapse navbar-collapse justify-content-between" id="mynavbar">
+      <ul class="navbar-nav mx-auto gap-3">
+        <li class="nav-item">
+          <a class="nav-link text-white fw-semibold" href="#">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white fw-semibold" href="#">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white fw-semibold" href="#">Contact</a>
+        </li>
+      </ul>
+
+      <form class="d-flex">
+        <input class="form-control me-2" type="text" placeholder="Search">
+        <button class="btn btn-success" type="button">Search</button>
+      </form>
+    </div>
+
+  </div>
+</nav>

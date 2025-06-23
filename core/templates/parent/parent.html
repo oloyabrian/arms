@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {{ title }}
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h3 class="mb-2">{{ title }}</h3></h1>
+      <div class="d-flex justify-content-end mb-3">
+    <a href="{% url 'add_parent' %}" class="btn btn-success btn-sm text-white">
+        <i class="bi bi-plus-circle"></i> Add New Parent
+    </a>
+</div>
+<div>
+   <table class="table table-striped table-custom">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Sex</th>
+                <th>Address</th>
+                <th>Telephone</th>
+                <th>Email</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for parent in parents %}
+            <tr>
+                <td>{{ parent.first_name }}</td>
+                <td>{{ parent.last_name }}</td>
+                <td>{{ parent.sex }}</td>
+                <td>{{ parent.address }}</td>
+                <td>{{ parent.tel }}</td>
+                <td>{{ parent.email }}</td>
+                <td>
+                    <a href="{% url 'update_parent' parent.id %}"  class="btn btn-outline-success btn-sm">Edit </a>
+                </td>
+                <td>
+                <form method="post" action="{% url 'delete_parent' parent.id %}" onsubmit="return confirm('Are you sure you want to delete this record?');">
+                            {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+
+                </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endblock %}
