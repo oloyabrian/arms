@@ -1,24 +1,25 @@
 {% load static %}
-<nav class="navbar navbar-expand-sm navbar-dark sticky-top" style="background-color: #800000;">
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm" style="background-color: #800000;">
   <div class="container-fluid">
 
-  <!-- Logo and School Name -->
-<div class="d-flex flex-column align-items-center me-4">
-   <a class="navbar-brand mb-0" href="/">
+    <!-- Logo & School Name -->
+    <div class="d-flex align-items-center">
+      <a class="navbar-brand d-flex align-items-center" href="/">
         <img src="{% static 'images/logo.jpeg' %}" alt="School Logo"
-             class="img-fluid rounded-circle mb-1" style="height: 50px; width: 80px;">
+             class="rounded-circle me-2" style="height: 50px; width: 50px; object-fit: cover;">
+        <span class="d-none d-md-block fw-bold text-white">Mapeera Nursery & Primary School</span>
       </a>
-  <span class="text-white fw-bold small text-center">Mapeera Nursery and Primary School</span>
-</div>
+    </div>
 
-
-    <!-- Toggle for mobile -->
+    <!-- Toggler -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- Nav Links and Search -->
+    <!-- Nav Content -->
     <div class="collapse navbar-collapse justify-content-between" id="mynavbar">
+
+      <!-- Center Navigation Links -->
       <ul class="navbar-nav mx-auto gap-3">
         <li class="nav-item">
           <a class="nav-link text-white fw-semibold" href="#">Home</a>
@@ -31,11 +32,39 @@
         </li>
       </ul>
 
-      <form class="d-flex">
-        <input class="form-control me-2" type="text" placeholder="Search">
-        <button class="btn btn-success" type="button">Search</button>
-      </form>
-    </div>
+      <!-- Right Side: Search + User Info + Logout -->
+      <div class="d-flex align-items-center gap-3">
 
+  <!-- Search -->
+  <form class="d-flex" role="search">
+    <input class="form-control form-control-sm me-2" type="search" placeholder="🔍 Search" aria-label="Search">
+    <button class="btn btn-outline-light btn-sm" type="submit">Go</button>
+  </form>
+
+  <!-- User Greeting -->
+  <span class="text-white small fw-semibold">
+    Hello, {{ user.username }}
+  </span>
+
+
+    <!-- Admin Link -->
+  {% if user.is_superuser or user.is_staff %}
+  <a href="/admin/" class="btn btn-sm btn-warning fw-semibold">
+    Admin Page
+  </a>
+  {% endif %}
+
+  <!-- Logout -->
+  <form action="{% url 'logout' %}" method="post" class="d-inline">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-outline-light border-2 fw-semibold">
+      🔓 Logout
+    </button>
+  </form>
+
+</div>
+
+
+    </div>
   </div>
 </nav>

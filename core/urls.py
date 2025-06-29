@@ -7,8 +7,9 @@ urlpatterns = [
     path('', lambda request: redirect('dashboard'), name='home'),
     path('dashboard/', dashboard_view, name='dashboard'),
 
-    # path('api/chart/data/', ChartData.as_view()),
-    # path('api/data/', ChartData.as_view(), name='api-data'),
+    path('register/', views.register_view, name='register'),
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
 
     path('', views.base_view, name= "base"),
     # path('chart/subjects/', views.subject_avg_scores_chart, name='subject_avg_scores'),

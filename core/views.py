@@ -1,14 +1,56 @@
-from django.contrib.auth import get_user_model
+from django.contrib import messages
+from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.http import HttpResponseForbidden
+
 from core.models import Student, Grade, Subject, Term, Teacher, Parent, ReportComment
 
 from .forms import *
 from .models import *
 from django.db.models import Avg
+
+def register_view(request):
+    # form = CreateUserForm()
+    if request.method =='POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            login(request, form.save())
+            return redirect('home')
+    else:
+        form = CreateUserForm()
+
+    context ={
+        'form': form,
+    }
+    return render(request, 'register.html', context)
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            login(request, form.get_user())
+            return  redirect('home')
+
+    else:
+        form = AuthenticationForm()
+    context ={
+
+    }
+    return render(request, 'login.html', context)
+
+
+def logout_view(request):
+    if request.method == 'POST':
+        logout(request)
+    return redirect('login')
+
+
 class HomeView(View):
     def get(self, request, *args, **kwargs):
         return render(request, 'chart.html', {})
@@ -41,6 +83,7 @@ class ChartData(APIView):
         return Response(data)
 
 # Render chart view with data passed into template context
+@login_required(login_url='login')
 def dashboard_view(request):
     # Make sure Classroom model exists; if not, remove this line or fix the import
     model_data = {
@@ -62,14 +105,14 @@ def dashboard_view(request):
         'labels': labels,
         'values': values
     })
-
+@login_required(login_url='login')
 def base_view(request):
     context={
         'title': "base page",
     }
     return render(request, 'base.html', context)
 
-
+@login_required(login_url='login')
 def view_student(request):
     students = Student.objects.all()
     context = {
@@ -78,10 +121,14 @@ def view_student(request):
     }
     return render(request, 'student/student.html', context)
 
+@login_required(login_url='login')
 def add_student(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        return HttpResponseForbidden("❌ You are not allowed to add any record.")
     form = StudentForm(request.POST or None)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Student added successfully.")
         return redirect('student')
 
     context = {
@@ -90,12 +137,16 @@ def add_student(request):
     }
     return render(request, 'student/add_student.html', context)
 
-
+@login_required(login_url='login')
 def update_student(request, student_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER', 'student'))
     student = get_object_or_404(Student, id=student_id)
     form = StudentForm(request.POST or None, instance=student)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Student updated successfully.")
         return redirect('student')
     context ={
         'title': 'Update Student Record',
@@ -103,11 +154,20 @@ def update_student(request, student_id):
     }
     return render(request, 'student/add_student.html', context)
 
+
+@login_required(login_url='login')
 def delete_student(request, student_id):
-    student = Student.objects.get(id=student_id)
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'student')  # safe fallback
+
+    student = get_object_or_404(Student, id=student_id)
+
     if request.method == 'POST':
         student.delete()
+        messages.success(request, "✅ Student deleted successfully.")
         return redirect('student')
+
     context = {
         'title': 'Student delete page',
         'obj': student
@@ -115,6 +175,7 @@ def delete_student(request, student_id):
     return render(request, 'delete.html', context)
 
 
+@login_required(login_url='login')
 def view_classroom(request):
     classrooms = Classroom.objects.all()
     context = {
@@ -124,10 +185,16 @@ def view_classroom(request):
     return render(request, 'classroom/classroom.html', context)
 
 
+@login_required(login_url='login')
 def add_classroom(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'classroom')
     form = ClassroomForm(request.POST or None)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Classroom added successfully.")
+
         return redirect('classroom')
 
     context ={
@@ -136,11 +203,17 @@ def add_classroom(request):
     }
     return render(request, 'classroom/add_classroom.html', context)
 
+@login_required(login_url='login')
 def update_classroom(request, classroom_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'classroom')
     classroom = get_object_or_404(Classroom, id=classroom_id)
     form = ClassroomForm(request.POST or None, instance=classroom)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Classroom updated successfully.")
+
         return redirect('classroom')
     context = {
         'title': 'Update classroom',
@@ -149,10 +222,16 @@ def update_classroom(request, classroom_id):
     return render(request, 'classroom/add_classroom.html', context)
 
 
+@login_required(login_url='login')
 def delete_classroom(request, classroom_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'classroom')
     classroom = Classroom.objects.get(id=classroom_id)
     if request.method == 'POST':
         classroom.delete()
+        messages.success(request, "✅ Classroom deleted successfully.")
+
         return redirect('classroom')
     context = {
         'title' : 'Classroom delete',
@@ -160,7 +239,7 @@ def delete_classroom(request, classroom_id):
     }
     return render(request, 'delete.html', context)
 
-
+@login_required(login_url='login')
 def view_parent(request):
     parents = Parent.objects.all()
     context={
@@ -169,10 +248,16 @@ def view_parent(request):
     }
     return render(request, 'parent/parent.html', context)
 
+@login_required(login_url='login')
 def add_parent(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'parent')
     form = ParentForm(request.POST or None)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Parent added successfully.")
+
         return redirect('parent')
     context = {
         'title': 'Add Parent Record',
@@ -180,11 +265,17 @@ def add_parent(request):
     }
     return render(request, 'parent/add_parent.html', context)
 
+
+@login_required(login_url='login')
 def update_parent(request, parent_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'parent')
     parent = get_object_or_404(Parent, id=parent_id)
     form = ParentForm(request.POST or None, instance=parent)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Parent updated successfully.")
         return redirect('parent')
     context = {
         'title': 'Update Parent',
@@ -193,10 +284,15 @@ def update_parent(request, parent_id):
     return render(request, 'parent/add_parent.html', context)
 
 
+@login_required(login_url='login')
 def delete_parent(request, parent_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'parent')
     parent = Parent.objects.get(id=parent_id)
     if request.method == 'POST':
         parent.delete()
+        messages.success(request, "✅ Parent deleted successfully.")
         return redirect('parent')
     context = {
         'title': 'Parent delete',
@@ -205,6 +301,7 @@ def delete_parent(request, parent_id):
     return render(request, 'delete.html', context)
 
 
+@login_required(login_url='login')
 def view_comment(request):
     comments = ReportComment.objects.all()
     context = {
@@ -214,10 +311,16 @@ def view_comment(request):
     }
     return render(request, 'comment/comment.html', context)
 
+
+@login_required(login_url='login')
 def add_comment(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'comment')
     form = CommentForm(request.POST or None)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Comment added successfully.")
         return redirect('comment')
     context = {
         'title': 'Add Comment',
@@ -225,11 +328,17 @@ def add_comment(request):
     }
     return render(request, 'comment/add_comment.html', context)
 
+
+@login_required(login_url='login')
 def update_comment(request, comment_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'comment')
     comment = get_object_or_404(ReportComment, id=comment_id)
     form = CommentForm(request.POST or None, instance=comment)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Comment updated successfully.")
         return redirect('comment')
     context = {
         'title': 'Update Comment',
@@ -237,10 +346,16 @@ def update_comment(request, comment_id):
     }
     return render(request, 'comment/add_comment.html', context)
 
+
+@login_required(login_url='login')
 def delete_comment(request, comment_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'comment')
     comment = ReportComment.objects.get(id=comment_id)
     if request.method == 'POST':
         comment.delete()
+        messages.success(request, "✅ Comment deleted successfully.")
         return redirect('comment')
     context = {
         'title' : 'Comment delete',
@@ -252,6 +367,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Grade
 from .forms import GradeForm
 
+@login_required(login_url='login')
 def view_grade(request):
     grades = Grade.objects.all()
     context = {
@@ -260,10 +376,16 @@ def view_grade(request):
     }
     return render(request, 'grade/grade.html', context)
 
+
+@login_required(login_url='login')
 def add_grade(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'grade')
     form = GradeForm(request.POST or None)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Grade added successfully.")
         return redirect('grade')
     context = {
         'title': 'Add grade',
@@ -271,11 +393,17 @@ def add_grade(request):
     }
     return render(request, 'grade/add_grade.html', context)
 
+
+@login_required(login_url='login')
 def update_grade(request, grade_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'grade')
     grade = get_object_or_404(Grade, id=grade_id)
     form = GradeForm(request.POST or None, instance=grade)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Grade updated successfully.")
         return redirect('grade')
     context = {
         'title': "Update Grade",
@@ -283,10 +411,16 @@ def update_grade(request, grade_id):
     }
     return render(request, 'grade/add_grade.html', context)
 
+
+@login_required(login_url='login')
 def delete_grade(request, grade_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'grade')
     grade = get_object_or_404(Grade, id=grade_id)
     if request.method == 'POST':
         grade.delete()
+        messages.success(request, "✅ Grade deleted successfully.")
         return redirect('grade')
     context = {
         'title': 'Grade delete',
@@ -294,6 +428,7 @@ def delete_grade(request, grade_id):
     }
     return render(request, 'delete.html', context)
 
+@login_required(login_url='login')
 def view_teacher(request):
     teachers = Teacher.objects.all()
     context = {
@@ -302,10 +437,16 @@ def view_teacher(request):
     }
     return render(request, 'teacher/teacher.html', context)
 
+
+@login_required(login_url='login')
 def add_teacher(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'teacher')
     form = TeacherForm(request.POST or None)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Teacher added successfully.")
         return redirect('teacher')
     context = {
         'title': 'add teacher',
@@ -313,12 +454,16 @@ def add_teacher(request):
     }
     return render(request, 'teacher/add_teacher.html', context)
 
-
+@login_required(login_url='login')
 def update_teacher(request, teacher_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'teacher')
     teacher = get_object_or_404(Teacher, id=teacher_id)
     form = TeacherForm(request.POST or None, instance=teacher)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Teacher updated successfully.")
         return redirect('teacher')
     context ={
         'title': 'Teacher update',
@@ -326,11 +471,15 @@ def update_teacher(request, teacher_id):
     }
     return render(request, 'teacher/add_teacher.html', context)
 
-
+@login_required(login_url='login')
 def delete_teacher(request, teacher_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'teacher')
     teacher = Teacher.objects.get(id=teacher_id)
     if request.method =="POST":
         teacher.delete()
+        messages.success(request, "✅ Teacher deleted successfully.")
         return redirect('teacher')
     context ={
         'title':'delete teacher',
@@ -338,6 +487,7 @@ def delete_teacher(request, teacher_id):
     }
     return render(request, 'delete.html', context)
 
+@login_required(login_url='login')
 def view_subject(request):
     subjects = Subject.objects.all()
     context = {
@@ -346,10 +496,16 @@ def view_subject(request):
     }
     return render(request, 'subject/subject.html', context)
 
+
+@login_required(login_url='login')
 def add_subject(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'subject')
     form = SubjectForm(request.POST or None)
     if request.method == 'POST':
         form.save()
+        messages.success(request, "✅ Subject added successfully.")
         return redirect('subject')
     context = {
         'title': 'Add subject',
@@ -357,11 +513,17 @@ def add_subject(request):
     }
     return render(request, 'subject/add_subject.html', context)
 
+
+@login_required(login_url='login')
 def update_subject(request, subject_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'subject')
     subject = get_object_or_404(Subject, id=subject_id)
     form = SubjectForm(request.POST or None, instance=subject)
     if form.is_valid():
         form.save()
+        messages.success(request, "✅ Subject updated successfully.")
         return redirect('subject')
     context = {
         'title': 'Update subject',
@@ -369,10 +531,15 @@ def update_subject(request, subject_id):
     }
     return render(request, 'subject/add_subject.html', context)
 
+@login_required(login_url='login')
 def delete_subject(request, subject_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'subject')
     subject = Subject.objects.get(id=subject_id)
     if request.method == 'POST':
         subject.delete()
+        messages.success(request, "✅ Subject deleted successfully.")
         return render('subject')
     context = {
         'title': 'Delete subject',
@@ -380,6 +547,8 @@ def delete_subject(request, subject_id):
     }
     return render(request, 'delete.html', context)
 
+
+@login_required(login_url='login')
 def view_term(request):
     terms = Term.objects.all()
     context = {
@@ -388,21 +557,33 @@ def view_term(request):
     }
     return render(request, 'term/term.html', context)
 
+
+@login_required(login_url='login')
 def add_term(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'term')
     form = TermForm(request.POST or None)
     if request.method == 'POST':
         form.save()
+        messages.success(request, "✅ Term added successfully.")
         return redirect('term')
     context = {
         'title': 'Add term',
         'form': form
     }
     return render(request, 'term/add_term.html', context)
+
+@login_required(login_url='login')
 def update_term(request, term_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'term')
     term = get_object_or_404(Term, id=term_id)
     form = TermForm(request.POST or None, instance=term)
     if request.method =='POST':
         form.save()
+        messages.success(request, "✅ Term updated successfully.")
         return redirect('term')
     context ={
         'title': 'Update term',
@@ -410,10 +591,16 @@ def update_term(request, term_id):
     }
     return render(request, 'term/add_term.html', context)
 
+
+@login_required(login_url='login')
 def delete_term(request, term_id):
+    if not request.user.is_staff and not request.user.is_superuser:
+        messages.warning(request, "❌ You are not authorized to perform this action.")
+        return redirect(request.META.get('HTTP_REFERER') or 'term')
     term = Term.objects.get(id=term_id)
     if request.method == 'POST':
         term.delete()
+        messages.success(request, "✅ Term deleted successfully.")
         return redirect('term')
     context ={
         'title': 'Delete term',
@@ -421,6 +608,8 @@ def delete_term(request, term_id):
     }
     return render(request, 'delete.html', context)
 
+
+@login_required(login_url='login')
 def subject_avg_scores_chart(request):
     # Select a term (latest or specific)
     term = Term.objects.last()

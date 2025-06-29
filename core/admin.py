@@ -6,27 +6,41 @@ from core.models import Term, Parent, Teacher, Classroom, Student, Subject, Grad
 class TermAdmin(admin.ModelAdmin):
     list_display = ('name', 'year')
     list_filter = ('name',)
+    list_editable = ('year',)
+    list_per_page = 8
 
 @admin.register(Parent)
 class ParentAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name','sex', 'address', 'tel', 'email')
+    list_editable = ('address', 'tel', 'email')
     list_filter = ('first_name', 'last_name')
+    list_per_page = 8
+
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'sex', 'date_employed', 'address', 'tel', 'email')
     list_filter = ('first_name', 'last_name')
+    list_editable = ('date_employed', 'address', 'tel', 'email')
+    list_per_page = 8
+
 
 @admin.register(Classroom)
 class ClassroomAdmin(admin.ModelAdmin):
     list_display = ('name', 'capacity', 'current_population', 'class_teacher')
     list_filter = ('name', 'class_teacher')
+    list_editable = ('capacity', 'current_population', 'class_teacher')
+    list_per_page = 8
+
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     list_display = ('bug_str', 'first_name', 'last_name', 'sex', 'date_of_birth', 'date_of_admission',
                    'parent_name', 'student_class', 'student_term')
     list_filter = ('student_class', 'student_term', 'first_name', 'last_name')
+    list_editable = ('student_class', 'student_term')
+    list_per_page = 8
+
 
     def bug_str(self, obj):
         return str(obj)  # This calls your model's __str__()
@@ -37,11 +51,17 @@ class StudentAdmin(admin.ModelAdmin):
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ('name', 'teacher')
     list_filter = ('name', 'teacher')
+    list_editable = ('teacher', )
+    list_per_page = 8
+
 
 @admin.register(Grade)
 class GradeAdmin(admin.ModelAdmin):
     list_display = ('student', 'subject', 'term', 'get_grade_label_display')
     list_filter = ('student', 'subject', 'term')
+    list_editable = ('subject', 'term')
+    list_per_page = 8
+
 
     def get_grade_label_display(self, obj):
         return obj.get_grade_label()
@@ -51,5 +71,8 @@ class GradeAdmin(admin.ModelAdmin):
 class ReportCommentAdmin(admin.ModelAdmin):
     list_display = ('student', 'term', 'comment')
     list_filter = ('student','term', 'comment' )
+    list_editable = ('term', 'comment')
+    list_per_page = 8
+
 
 
